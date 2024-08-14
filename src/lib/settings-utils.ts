@@ -20,25 +20,32 @@ export function setHue(hue: number): void {
   if (typeof localStorage !== 'undefined') {
     localStorage.setItem('hue', String(hue));
   }
-  const r = document.querySelector(':root') as HTMLElement;
-  if (r) {
-    r.style.setProperty('--primary-hue', String(hue));
-  }
+  applyThemeToDocument(getStoredTheme(), hue);
 }
 
-export function applyThemeToDocument(theme: LIGHT_DARK_MODE) {
+export function applyThemeToDocument(theme: LIGHT_DARK_MODE, hue: number) {
+  document.documentElement.style.setProperty('--primary-hue', String(hue));
+
   if (theme === DARK_MODE) {
     document.documentElement.classList.add('dark');
   } else {
     document.documentElement.classList.remove('dark');
   }
+
+  const themeProvider = document.getElementById('theme-provider');
+  if (themeProvider) {
+    themeProvider.dataset.theme = theme;
+    themeProvider.dataset.hue = String(hue);
+  }
+
+  window.dispatchEvent(new CustomEvent('theme-change'));
 }
 
 export function setTheme(theme: LIGHT_DARK_MODE): void {
   if (typeof localStorage !== 'undefined') {
     localStorage.setItem('theme', theme);
   }
-  applyThemeToDocument(theme);
+  applyThemeToDocument(theme, getHue());
 }
 
 export function getStoredTheme(): LIGHT_DARK_MODE {

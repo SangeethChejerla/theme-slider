@@ -17,7 +17,6 @@ const ThemeCustomizer: React.FC = () => {
 
   useEffect(() => {
     setHue(hue);
-    document.documentElement.style.setProperty('--primary-hue', hue.toString());
   }, [hue]);
 
   useEffect(() => {
