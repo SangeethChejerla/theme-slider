@@ -1,6 +1,7 @@
 ---
 import { ViewTransitions } from 'astro:transitions';
-import { getStoredTheme } from '../lib/settings-utils';
+import { getStoredTheme, getHue } from '../lib/settings-utils';
+import ThemeCustomizer from '../components/ThemeCustomizer';
 
 interface Props {
 	title: string;
@@ -8,6 +9,7 @@ interface Props {
 
 const { title } = Astro.props;
 const initialTheme = getStoredTheme();
+const initialHue = getHue();
 ---
 
 <!doctype html>
@@ -22,16 +24,27 @@ const initialTheme = getStoredTheme();
 		<ViewTransitions />
 	</head>
 	<body>
-		<slot />
+		<div id="theme-provider" data-theme={initialTheme} data-hue={initialHue}>
+			<header class="p-4 bg-primary-100 dark:bg-primary-900">
+				<div class="container mx-auto flex justify-between items-center">
+					<h1 class="text-2xl font-bold text-primary-900 dark:text-primary-100">Your Site Name</h1>
+					<ThemeCustomizer client:load />
+				</div>
+			</header>
+			<main class="container mx-auto p-4">
+				<slot />
+			</main>
+		</div>
 		<script>
-			import { applyThemeToDocument, getHue, getStoredTheme } from '../lib/settings-utils';
+			import { applyThemeToDocument } from '../lib/settings-utils';
 			
 			function updateTheme() {
-				const theme = getStoredTheme();
-				applyThemeToDocument(theme);
-				
-				const hue = getHue();
-				document.documentElement.style.setProperty('--primary-hue', hue.toString());
+				const themeProvider = document.getElementById('theme-provider');
+				if (themeProvider) {
+					const theme = themeProvider.dataset.theme;
+					const hue = themeProvider.dataset.hue;
+					applyThemeToDocument(theme, parseInt(hue || '250', 10));
+				}
 			}
 
 			// Run on initial load
@@ -39,6 +52,27 @@ const initialTheme = getStoredTheme();
 
 			// Setup for view transitions
 			document.addEventListener('astro:after-swap', updateTheme);
+
+			// Listen for theme changes
+			window.addEventListener('theme-change', updateTheme);
 		</script>
 	</body>
 </html>
+
+<style is:global>
+	:root {
+		--primary-hue: 250;
+		color-scheme: light dark;
+	}
+
+	body {
+		font-family: system-ui, sans-serif;
+		background-color: hsl(var(--primary-hue) 20% 95%);
+		color: hsl(var(--primary-hue) 20% 20%);
+	}
+
+	.dark body {
+		background-color: hsl(var(--primary-hue) 20% 10%);
+		color: hsl(var(--primary-hue) 20% 90%);
+	}
+</style>
